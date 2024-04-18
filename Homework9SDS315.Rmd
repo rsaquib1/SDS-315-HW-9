@@ -1,0 +1,124 @@
+---
+title: "Homework9SDS315"
+output: html_document
+date: "2024-04-17"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE, message=FALSE}
+library(ggplot2)
+library(mosaic)
+library(tidyverse)
+library(dplyr)
+library(MatchIt)
+```
+
+# Problem 1
+
+## Part A
+```{r echo=FALSE, message=FALSE}
+turnout <- read.csv("turnout.csv")
+prop(voted1998 ~ GOTV_call, data = turnout)
+prop.test(voted1998~GOTV_call, data = turnout)
+```
+
+### Description
+The proportion of those who received a GOTV call who voted in 1998 was about 64.78%, and the sample proportion of those not receiving a GOTV call who voted in 1998 was about 44.42%. After doing a large-sample 95% confidence interval test using prop test for the difference in two proportions, the evidence shows that the difference of of voting in 1998 is somewhere between 0.2322399 and 0.2659167, with 95% confidence.
+
+## Part B
+```{r echo=FALSE, message=FALSE}
+confound_1996 <- turnout %>%
+  group_by(GOTV_call, voted1998) %>%
+  summarize(meanVoted1996 = mean(voted1996),
+            sdVoted1996 = sd(voted1996))
+confound_age <- turnout %>%
+  group_by(GOTV_call, voted1998) %>%
+  summarize(meanAge = mean(AGE),
+            sdAge = sd(AGE))
+confound_MAJORPTY <- turnout %>%
+  group_by(GOTV_call, voted1998) %>%
+  summarize(meanMajorpty = mean(MAJORPTY),
+            sdMajorpty = sd(MAJORPTY))
+print(confound_age)
+print(confound_1996)
+print(confound_MAJORPTY)
+```
+
+### Description 
+The variables voted1996, AGE, and MAJORPITY has evidence to be confounding variables based off of the summary statistics. The highest mean for age of about 61.52 among individuals who both received a GOTV call and participated in the 1998 election. The lowest mean age is about 44.8 among individuals who both didn't received a GOTV call and participated in the 1998 election.The highest mean for individuals who voted in 1996 is about .87 with people who both received a GOTV call and participated in the 1998 election, where as the lowest mean for this variable is about 0.35 among individuals who didn't receive a GOTV call and did not participate in the 1988 election. The highest man for the MAJORPTY variable is about .83 among individuals who received a GOTV call and participated in the 1988 election, whereas the lowest mean of about .70 is among both individual who didn't participate in the 1998 election and did not receive a call.This difference in the mean of variables AGE, MAJORPTY, and voted1996 across different groups suggests that these variables may be influencing both the likelihood of receiving a GOTV call and the likelihood of voting in the 1998 election.
+
+## Part C
+```{r echo=FALSE, message=FALSE}
+turnout_matched = matchit(GOTV_call ~ AGE + voted1996 + MAJORPTY,data = turnout, ratio=5) %>%
+  match.data
+matched_turnout <- turnout_matched %>%
+  group_by(GOTV_call) %>%
+  summarize(mean_AGE = mean(AGE),
+            mean_voted1996 = mean(voted1996),
+            mean_MAJORPTY = mean(MAJORPTY))
+
+print(matched_turnout)
+prop(voted1998 ~ GOTV_call, data = turnout_matched, success = 1)
+prop.test(voted1998~GOTV_call, data = turnout_matched, success = 1)
+```
+
+### Description
+The summary statistics shows that the "matched data set" is balanced with respect to the 3 confounders of voted1996, AGE, and MAJORPTY because it appears that the means the three variables are very similar between the two groups defined by GOTV_call.The mean age for both individuals who received and did not receive a government call was about 58.3. The mean  for those who voted in 1996 while also receiving and not receiving a call was about .7. The mean for the variable MAJORPTY was about .8 for those who received and did not receive a call. The proportion of those receiving a GOTV call who voted in 1998 in the matched data set is about 64.8%, whereas the sample proportion of those not receiving a GOTV call who voted in 1998 is about 57.4%. After doing a large-sample 95% confidence interval test using prop test for the difference in two proportions of the matched data set, the evidence shows that the difference of of voting in 1998 is somewhere between -0.005611728 and -0.141756693, with 95% confidence. These results suggest that receiving a "get out the vote" (GOTV) call has a statistically significant effect on the likelihood of voting in the 1998 election. The observed p-value of 0.03791 and interval not include 0; being below the significance level of 0.05, provides evidence to reject the null hypothesis, that individuals who received a GOTV call were more likely to vote in the 1998 election compared to those who did not receive a call.
+
+# Problem 2
+
+## Part A
+```{r echo=FALSE, message=FALSE}
+solder <- read.csv('solder.csv')
+opening <- ggplot(solder, aes(x = Opening, y = skips)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  labs(title = "Relationship between Skips and Opening Size on Solder Gun",
+       x = "Opening Size",
+       y = "Number of Skips") +
+  theme_minimal()
+opening
+solder_graph <- ggplot(solder, aes(x = Solder, y = skips)) +
+  geom_boxplot(fill = "lightyellow", color = "black") +
+  labs(title = "Relationship between Skips and Solder Thickness",
+       x = "Solder Thickness",
+       y = "Number of Skips") +
+  theme_minimal()
+solder_graph
+aggregate(skips~Opening, data=solder, median)
+aggregate(skips~Opening, data=solder, sd)
+aggregate(skips~Solder, data=solder, median)
+aggregate(skips~Solder, data=solder, sd)
+```
+
+### Description 
+The first bivariate graph labeled "Relationship between Skips and Opening Size on Solder" is a box plot displaying the relationship of one categorical variable and one numerical variable. The opening size (large, medium, or small) is the categorical variable as the x axis and the number of skips is the numerical variable as the y axis. All the box plots are approximately are right/positively skewed. The "L" (large) box plot has the lowest median of about 0.0 with the lowest standard deviation of about 2.83. The "S" (small) box plot has the highest median of about 7.5 with the highest standard deviation of about 11.33. Lastly the "M" (median) box plot has a median of about 2.0 with a standard deviation of about 4.77. Based off of this graph, it can be taken away that with larger openings generally correlate with fewer skips and smaller openings have higher variability and potentially more skips, indicating a potential relationship between opening size and skip occurrences in the manufacturing process.The second bivariate graph labeled "Relationship between Skips and Solder Thickness" is a box plot displaying the relationship of one categorical variable and one numerical variable. The Solder Thickness (thick and thin) is the categorical variable as the x axis and the number of skips is the numerical variable as the y axis. Both of the box plots are approximately are right/positively skewed.The "Thick" box plot has the lowest median of about 1 with the lowest standard deviation of about 4.85.The "Thin" box plot has the highest median of about 4.0 with the highest standard deviation of about 10.27.The box plot analysis suggests that when thicker solder alloy is used, there are usually fewer skips, while thinner solder alloy tends to have more skips, showing a possible link between solder thickness and the number of skips in manufacturing.
+
+## Part B
+```{r echo=FALSE, message=FALSE}
+jointmodel <- lm(skips ~ Opening + Solder + Solder:Opening, data = solder)
+coef_joint <- coef(jointmodel)
+conf_intervals <- confint(jointmodel)
+table_data <- data.frame(
+  Predictor = c("Intercept", "Opening: medium", "Opening: large", "Solder: thin", "Opening: medium & Solder: thin", "Opening: large & Solder: thin"),
+  Estimate = coef_joint,
+  Upper = conf_intervals[, 1],
+  Lower = conf_intervals[, 2]
+)
+table_data
+```
+```{r echo=FALSE, message=FALSE}
+coef(jointmodel) %>%
+  round(2)
+```
+## Part C
+The baseline number of skips when the opening size is not small or medium and the solder type is thick is about .39 skips.
+The main effect for the Opening M variable is about 2.41 skips. This is the effect of Opening M in isolation.
+The main effect for the Opening S is about 5.13 skips. This is the effect of Opening S in isolation.
+The main effect for the SolderThin is about 2.28 skips. This is the effect of the SolderThin in isolation.
+The interaction effect for Opening M and SolderThin is about -.74.  In other words, when both the opening size is medium and the solder type is thin, the number of skips is 1 less than what would be expected based on the sum of the individual effects of these variables.The ineraction effect for Opening S and SolderThin is about 9.65. In other words, when both the opening size is small and the solder type is thin, the number of skips is 10 more than what would be expected based on the sum of the individual effects of these variables.
+
+## Part D
+Based on the analysis conducted in Problem 2, I would recommend to AT&T to use a combination of a large opening size and thick solder thickness. This recommendation is based on the observation that the baseline number of skips, when both the opening size is not small or medium and the solder type is thick, is 0.39 skips, as indicated by the intercept of the regression model. Additionally, the box plot analysis suggests that thicker solder alloy tends to have fewer skips compared to thinner solder alloy. Also, the "L" (large) opening size and "Thick" solder thickness have the lowest median number of skips. Therefore, by choosing a large opening size and thick solder thickness, AT&T may minimize the number of skips in the manufacturing process, thereby improving reliability.
